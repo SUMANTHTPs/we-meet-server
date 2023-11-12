@@ -1,15 +1,26 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
-const filterObj = require("../utils/filterObj");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
+const sendEmail = require("../services/mailer");
+
+const User = require("../models/user");
+const filterObj = require("../utils/filterObj");
+const otp = require("../Templates/Mail/otp");
+const resetPassword = require("../Templates/Mail/resetPassword");
 
 const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
 
 // Register new user
 exports.register = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
+
+  if (!firstName || !lastName || !email || !password) {
+    return res.status(400).json({
+      status: "error",
+      message: "All the fields are mandatory",
+    });
+  }
 
   const filteredBody = filterObj(
     req.body,
@@ -62,20 +73,30 @@ exports.sendOTP = async (req, res, next) => {
 
   const otpExpiryTime = Date.now() + 10 * 60 * 1000; // 10 min  timeout
 
-  await User.findByIdAndUpdate(userId, {
-    otp: newOtp,
+  const user = await User.findByIdAndUpdate(userId, {
     otpExpiryTime,
   });
 
+  user.otp = newOtp.toString();
+
+  await user.save({ new: true, validateModifiedOnly: true });
+  console.log(newOtp);
+
   // TODO: Send mail
+
+  sendEmail(
+    user.email,
+    "We meet OTP verification",
+    "",
+    otp(user.firstName ?? "User", newOtp)
+  );
   res.status(200).json({
     status: "success",
     message: "OTP sent successfully",
   });
 };
 
-//  verifyOTP
-
+//  verify OTP
 exports.verifyOTP = async (req, res, next) => {
   const { email, otp } = req.body;
 
@@ -85,8 +106,16 @@ exports.verifyOTP = async (req, res, next) => {
   });
 
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
+      message: "Email is invalid or OTP expired",
+    });
+  }
+
+  if (user.verified) {
+    return res.status(400).json({
+      status: "error",
+      message: "OTP is incorrect",
     });
   }
 
@@ -131,6 +160,7 @@ exports.login = async (req, res, next) => {
       status: "error",
       message: "Email is incorrect",
     });
+    return;
   }
 
   const token = signToken(userDoc._id);
@@ -149,7 +179,7 @@ exports.protect = async (req, res, next) => {
 
   let token;
 
-  // Bearer token like 'Bearer somethingTOken1234'
+  // Bearer token like 'Bearer someToken1234'
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -157,12 +187,12 @@ exports.protect = async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   } else if (req.cookies.jwt) {
     token = req.cookies.jwt;
-  } else {
-    req.status(400).json({
-      status: "error",
-      message: "You are not authorized, try again",
-    });
-    return;
+  }
+
+  if (!token) {
+    return next(
+      new AppError(`You are not logged in! Please log in to get access.`, 401)
+    );
   }
 
   // verification of token
@@ -174,21 +204,23 @@ exports.protect = async (req, res, next) => {
   const thisUser = await User.findById(decoded.userId);
 
   if (!thisUser) {
-    res.status(400).json({
-      status: "error",
-      message: "The user doesn't exist",
-    });
+    return next(
+      new AppError(
+        "The user belonging to this token does no longer exists.",
+        401
+      )
+    );
   }
 
   // Check if user changed their password after token was issued
 
   if (thisUser.changedPasswordAfter(decoded.iat)) {
-    res.status(400).json({
-      status: "error",
-      message: "User recently updated password! Please login again",
-    });
+    return next(
+      new AppError("User recently changed password! Please log in again.", 401)
+    );
   }
 
+  // GRANT ACCESS TO PROTECTED ROUTE
   req.user = thisUser;
   next();
 };
@@ -197,18 +229,23 @@ exports.forgotPassword = async (req, res, next) => {
   //Get user email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "There is no user with this email address",
     });
-    return;
   }
   // Generate the random reset token
   const resetToken = user.createPasswordToken();
 
-  const resetURL = `https://wemeet.com/auth/reset-password/?code=${resetToken}`;
+  const resetURL = `http://localhost:3000/auth/reset-password/?code=${resetToken}`;
   try {
-    // TODO => Send email with reset URL
+    //Send email with reset URL
+    sendEmail(
+      user.email,
+      "We meet OTP to reset password",
+      "",
+      resetPassword(user.firstName ?? "User", resetURL)
+    );
 
     res.status(200).json({
       status: "success",
@@ -220,10 +257,10 @@ exports.forgotPassword = async (req, res, next) => {
 
     await user.save({ validateBeforeSave: false });
 
-    res.status(500).json({
-      status: "error",
-      message: "There was an error sending the email, please try again",
-    });
+    return next(
+      new AppError("There was an error sending the email. Try again later!"),
+      500
+    );
   }
 };
 
@@ -240,13 +277,11 @@ exports.resetPassword = async (req, res, next) => {
   });
 
   // 2. If token has expired or submission out of time
-
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
       message: "Token in invalid or expired",
     });
-    return;
   }
 
   // Update user password
@@ -259,7 +294,13 @@ exports.resetPassword = async (req, res, next) => {
 
   // Login user and send token
 
-  // TODO => send an email to inform about password change
+  // send an email to inform about password sendEmail(
+  sendEmail(
+    user.email,
+    "Your password is successfully changed",
+    "Your changed the password  just now. Let us know if you didn't did this",
+    ""
+  );
 
   const token = signToken(user._id);
 
