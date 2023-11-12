@@ -156,10 +156,21 @@ exports.login = async (req, res, next) => {
 
   const userDoc = await User.findOne({ email: email }).select("+password");
 
-  if (!userDoc || (await userDoc.correctPassword(password, user.password))) {
+  // if (!userDoc.verified) {
+  //   return res.status(400).json({
+  //     status: "error",
+  //     message: "Registration incomplete, register again",
+  //   });
+  // }
+
+  if (
+    !userDoc ||
+    !(await userDoc.correctPassword(password, userDoc.password))
+  ) {
+    console.log(await userDoc.correctPassword(password, userDoc.password));
     res.status(400).json({
       status: "error",
-      message: "Email is incorrect",
+      message: "Email or password is incorrect",
     });
     return;
   }
