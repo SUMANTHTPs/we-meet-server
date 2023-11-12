@@ -67,11 +67,18 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password") || !this.password) return next();
-  console.log("1st pre hook");
 
   // Hash the password with the cost of 12
   this.password = await bcrypt.hash(this.password, 12);
-  console.log("Password encrypted");
+  next();
+});
+
+userSchema.pre("findOneAndUpdate", async function (next) {
+  console.log(!this._update.password);
+  if (!this._update.password) return next();
+
+  // Hash the password with the cost of 12
+  this._update.password = await bcrypt.hash(this._update.password, 12);
   next();
 });
 
@@ -80,8 +87,7 @@ userSchema.pre("save", async function (next) {
 
   // Hash the OTP with the cost of 12
   this.otp = await bcrypt.hash(this.otp.toString(), 12);
-  console.log("otp pre hook")
-  
+
   next();
 });
 
@@ -90,7 +96,6 @@ userSchema.pre("save", function (next) {
     return next();
 
   this.passwordChangedAt = Date.now() - 1000;
-  console.log("Password2 hit");
   next();
 });
 

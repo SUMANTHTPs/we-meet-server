@@ -26,8 +26,8 @@ exports.register = async (req, res, next) => {
     req.body,
     "firstName",
     "lastName",
-    "password",
-    "email"
+    "email",
+    "password"
   );
 
   // check if email is already present
@@ -54,9 +54,10 @@ exports.register = async (req, res, next) => {
   } else {
     // if user record is not available in DB
     const newUser = await User.create(filteredBody);
-
     // generate OTP and send mail to user
     req.userId = newUser._id;
+
+    // await newUser.save();
 
     next();
   }
