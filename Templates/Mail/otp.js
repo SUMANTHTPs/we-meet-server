@@ -181,7 +181,7 @@ module.exports = (name, otp) => {
                                 <p style="font-size: 14px; line-height: 140%;"><span style="color: #000000; line-height: 19.6px;">Hello ${name},</span></p>
                                 <p style="font-size: 14px; line-height: 140%;"> </p>
                                 <p style="font-size: 14px; line-height: 140%;"><span style="color: #000000; line-height: 19.6px;">OTP for verification is ${otp}.</span><br /><br /><span style="color: #000000; line-height: 19.6px;">Note: This OTP is valid for next 10 mins.</span></p>
-                                <p style="font-size: 14px; line-height: 140%;"><br /><br /><span style="color: #000000; line-height: 19.6px;">Thanks &amp; Regards</span><br /><span style="color: #000000; line-height: 19.6px;">Team Task</span></p>
+                                <p style="font-size: 14px; line-height: 140%;"><br /><br /><span style="color: #000000; line-height: 19.6px;">Thanks &amp; Regards</span><br /><span style="color: #000000; line-height: 19.6px;">Team We meet</span></p>
                               </div>
 
                             </td>

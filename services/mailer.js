@@ -1,23 +1,24 @@
 const nodemailer = require("nodemailer");
-const fs = require("fs")
+const dotenv = require("dotenv");
+dotenv.config({ path: "./config.env" });
 
 // Create a transporter using Gmail SMTP
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "wemeetbysumanth@gmail.com",
-    pass: "xwqyfhqkulkjryux",
+    user: process.env.MAIL_AUTH_USER,
+    pass: process.env.MAIL_AUTH_KEY,
   },
 });
 
 const sendEmail = (to, subject, text, htmlPath, attachments) => {
   const mailOptions = {
-    from: "wemeetbysumanth@gmail.com",
+    from: process.env.MAIL_AUTH_USER,
     to,
     subject,
     text,
     html: htmlPath,
-    attachments
+    attachments,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
