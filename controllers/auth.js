@@ -156,6 +156,14 @@ exports.login = async (req, res, next) => {
 
   const userDoc = await User.findOne({ email: email }).select("+password");
 
+  if (!userDoc || !userDoc.password) {
+    res.status(400).json({
+      status: "error",
+      message: "Invalid credentials",
+    });
+
+    return;
+  }
   // if (!userDoc.verified) {
   //   return res.status(400).json({
   //     status: "error",
@@ -165,7 +173,7 @@ exports.login = async (req, res, next) => {
 
   if (
     !userDoc ||
-    !(await userDoc.correctPassword(password, userDoc.password))
+    !(await userDoc?.correctPassword(password, userDoc.password))
   ) {
     console.log(await userDoc.correctPassword(password, userDoc.password));
     res.status(400).json({
@@ -247,14 +255,16 @@ exports.forgotPassword = async (req, res, next) => {
     });
   }
   // Generate the random reset token
-  const resetToken = user.createPasswordToken();
+  const resetToken = user.createPasswordResetToken();
 
-  const resetURL = `http://localhost:3000/auth/reset-password/?code=${resetToken}`;
+  await user.save({ validateBeforeSave: false });
+
+  const resetURL = `http://localhost:3000/auth/new-password?token=${resetToken}`;
   try {
     //Send email with reset URL
     sendEmail(
       user.email,
-      "We meet OTP to reset password",
+      "Steps to reset the password of we meet",
       "",
       resetPassword(user.firstName ?? "User", resetURL)
     );
@@ -280,17 +290,17 @@ exports.resetPassword = async (req, res, next) => {
   // get the user based on token
   const hashedToken = crypto
     .createHash("sha256")
-    .update(req.params.token)
+    .update(req.body.token)
     .digest("hex");
 
-  const user = await user.findOne({
+  const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
 
   // 2. If token has expired or submission out of time
   if (!user) {
-    return res.status(400).json({
+    return res.status(404).json({
       status: "error",
       message: "Token in invalid or expired",
     });

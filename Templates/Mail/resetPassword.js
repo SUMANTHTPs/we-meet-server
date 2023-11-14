@@ -180,7 +180,7 @@ module.exports = (name, link) => {
                                     <p style="font-size: 14px; line-height: 140%;"><span style="color: #000000; line-height: 19.6px;">Hello ${name},</span></p>
                                     <p style="font-size: 14px; line-height: 140%;"> </p>
                                     <p style="font-size: 14px; line-height: 140%;"><span style="color: #000000; line-height: 19.6px;">Please click on the given button to reset your password</span><br /><br /><span style="color: #000000; line-height: 19.6px;">Note: This link is valid for only 10 mins.</span></p>
-                                    <p style="font-size: 14px; line-height: 140%;"><br /><br /><span style="color: #000000; line-height: 19.6px;">Thanks &amp; Regards</span><br /><span style="color: #000000; line-height: 19.6px;">Team Task</span></p>
+                                    <p style="font-size: 14px; line-height: 140%;"><br /><br /><span style="color: #000000; line-height: 19.6px;">Thanks &amp; Regards</span><br /><span style="color: #000000; line-height: 19.6px;">Team WeMeet</span></p>
                                   </div>
     
                                 </td>
@@ -263,8 +263,8 @@ module.exports = (name, link) => {
                                 <td style="overflow-wrap:break-word;word-break:break-word;padding:48px;font-family:'Cabin',sans-serif;" align="left">
     
                                   <div style="color: #958d8d; line-height: 170%; text-align: center; word-wrap: break-word;">
-                                    <p style="font-size: 14px; line-height: 170%;">Love 💙 Team Tawk</p>
-                                    <p style="font-size: 14px; line-height: 170%;">For any assistance and queries write to us at <a rel="noopener" href="mailto:support@codingmonk.in?" target="_blank">Support@codingmonk.in</a><br /><br /></p>
+                                    <p style="font-size: 14px; line-height: 170%;">Love 💙 Team WeMeet</p>
+                                    <p style="font-size: 14px; line-height: 170%;">For any assistance and queries write to us at <a rel="noopener" href="mailto:wemeetbysumanth@gmail.com?" target="_blank">Support@weMeetBySumanth.in</a><br /><br /></p>
                                   </div>
     
                                 </td>

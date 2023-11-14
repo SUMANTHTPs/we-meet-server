@@ -29,20 +29,16 @@ const userSchema = new mongoose.Schema({
     },
   },
   password: {
-    // unselect
     type: String,
     required: [true, "Password is required"],
   },
   passwordChangedAt: {
-    // unselect
     type: Date,
   },
   passwordResetToken: {
-    // unselect
     type: String,
   },
   passwordResetExpires: {
-    // unselect
     type: Date,
   },
   createdAt: {
@@ -50,7 +46,6 @@ const userSchema = new mongoose.Schema({
     default: Date.now(),
   },
   updatedAt: {
-    // unselect
     type: Date,
   },
   verified: {
@@ -126,6 +121,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimeStamp) {
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
 
+  // adds hashed token into user details with expiry time
   this.passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
