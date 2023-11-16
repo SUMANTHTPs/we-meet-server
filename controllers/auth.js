@@ -189,6 +189,7 @@ exports.login = async (req, res, next) => {
     status: "success",
     message: "Logged in successfully",
     token,
+    userId: userDoc._id,
   });
 };
 
@@ -217,7 +218,7 @@ exports.protect = async (req, res, next) => {
 
   // verification of token
 
-  const decoded = await promisify(jwt.verify(token, process.env.JWT_SECRET));
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // check if user still exist
 

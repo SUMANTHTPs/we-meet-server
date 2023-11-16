@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const dotenv = require("dotenv")
+const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
 process.on("uncaughtException", (err) => {
@@ -12,6 +12,19 @@ const app = require("./app");
 
 const http = require("http");
 const server = http.createServer(app);
+
+const { Server } = require("socket.io");
+const { promisify } = require("util");
+const { User } = require("./models/user");
+
+// Add this
+// Create an io server and allow for CORS from http://localhost:3000 with GET and POST methods
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 
 const DB = process.env.DATABASE.replace(
   "<PASSWORD>",
@@ -37,6 +50,31 @@ const port = process.env.PORT || 8000;
 
 server.listen(port, () => {
   console.log(`App running on port ${port} ...`);
+});
+
+// Add this
+// Listen for when the client connects via socket.io-client
+io.on("connection", async (socket) => {
+  const userId = socket.handshake.query["userId"];
+
+  console.log(`User connected ${socket.id}`);
+
+  if (userId * 1 !== 0 && Boolean(userId)) {
+    await User.findByIdAndUpdate(userId, { socketId: socket.id });
+  }
+
+  // We can write our socket event listeners in here...
+  socket.on("friendRequest", async (data) => {
+    console.log(data.to);
+
+    const to = await User.findById(data.to).select("socketId");
+
+    // create a friend request
+    // emit event request received to recipient
+    io.to(to.socketId).emit("newFriendRequest", {
+      message: "Here we can pass some data",
+    });
+  });
 });
 
 process.on("unhandledRejection", (err) => {
