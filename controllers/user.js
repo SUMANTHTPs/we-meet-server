@@ -57,15 +57,14 @@ exports.getRequests = async (req, res, next) => {
 };
 
 exports.getFriends = async (req, res, next) => {
-  console.log(req.user._id);
-  const friends = await User.findById(req.user._id).populate(
+  const thisUser = await User.findById(req.user._id).populate(
     "friends",
     "_id firstName lastName"
   );
 
   res.status(200).json({
     status: "success",
-    data: friends,
+    data: thisUser.friends,
     message: "Friends found successfully!",
   });
 };

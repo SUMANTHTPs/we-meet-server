@@ -140,6 +140,7 @@ exports.verifyOTP = async (req, res, next) => {
     status: "success",
     message: "OTP verified successfully",
     token,
+    userId: user._id,
   });
 };
 
@@ -317,7 +318,7 @@ exports.resetPassword = async (req, res, next) => {
 
   // Login user and send token
 
-  // send an email to inform about password sendEmail(
+  // send an email to inform about password change
   sendEmail(
     user.email,
     "Your password is successfully changed",
