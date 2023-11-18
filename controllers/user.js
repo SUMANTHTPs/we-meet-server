@@ -29,6 +29,7 @@ exports.getUsers = async (req, res, next) => {
     verified: true,
   }).select("firstName lastName _id");
 
+  // TODO => check 
   const thisUser = req.user;
 
   const remainingUsers = allUsers.filter(

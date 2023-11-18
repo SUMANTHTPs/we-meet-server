@@ -138,7 +138,7 @@ exports.verifyOTP = async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "OTP verified successfully",
+    message: "OTP verified successfully!",
     token,
     userId: user._id,
   });
@@ -212,9 +212,9 @@ exports.protect = async (req, res, next) => {
   }
 
   if (!token) {
-    return next(
-      new AppError(`You are not logged in! Please log in to get access.`, 401)
-    );
+    return res.status(401).json({
+      message: "You are not logged in! Please log in to get access.",
+    });
   }
 
   // verification of token
@@ -226,20 +226,17 @@ exports.protect = async (req, res, next) => {
   const thisUser = await User.findById(decoded.userId);
 
   if (!thisUser) {
-    return next(
-      new AppError(
-        "The user belonging to this token does no longer exists.",
-        401
-      )
-    );
+    return res.status(401).json({
+      message: "The user belonging to this token does no longer exists.",
+    });
   }
 
   // Check if user changed their password after token was issued
 
   if (thisUser.changedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError("User recently changed password! Please log in again.", 401)
-    );
+    return res.status(401).json({
+      message: "User recently changed password! Please log in again.",
+    });
   }
 
   // GRANT ACCESS TO PROTECTED ROUTE
@@ -281,10 +278,9 @@ exports.forgotPassword = async (req, res, next) => {
 
     await user.save({ validateBeforeSave: false });
 
-    return next(
-      new AppError("There was an error sending the email. Try again later!"),
-      500
-    );
+    return res.status(500).json({
+      message: "There was an error sending the email. Try again later!",
+    });
   }
 };
 

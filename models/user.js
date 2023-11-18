@@ -67,6 +67,10 @@ const userSchema = new mongoose.Schema({
   socketId: {
     type: String,
   },
+  status: {
+    type: String,
+    enum: ["Online", "Offline"],
+  },
 });
 
 userSchema.pre("save", async function (next) {

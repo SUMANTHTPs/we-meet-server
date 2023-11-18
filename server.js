@@ -17,6 +17,7 @@ const { Server } = require("socket.io");
 const { promisify } = require("util");
 const User = require("./models/user");
 const FriendRequest = require("./models/friendRequest");
+const OneToOneMessage = require("./models/oneToOneMessage");
 
 // Add this
 // Create an io server and allow for CORS from http://localhost:3000 with GET and POST methods
@@ -59,16 +60,15 @@ io.on("connection", async (socket) => {
   console.log(JSON.stringify(socket.handshake.query));
   const userId = socket.handshake.query["userId"];
 
-  console.log(`User connected via socket id ${socket.id}`);
-
-  if (userId * 1 !== 0 && Boolean(userId)) {
-    await User.findByIdAndUpdate(userId, { socketId: socket.id });
+  if (Boolean(userId) && userId) {
+    await User.findByIdAndUpdate(userId, {
+      socketId: socket.id,
+      status: "Online",
+    });
   }
 
   // We can write our socket event listeners in here...
   socket.on("friend_request", async (data) => {
-    console.log(data.to);
-
     const to = await User.findById(data.to).select("socketId");
 
     const from = await User.findById(data.from).select("socketId");
@@ -83,7 +83,7 @@ io.on("connection", async (socket) => {
       message: "New friend request received",
     });
 
-    io.to(from.socketId).emit("new_friend_request", {
+    io.to(from.socketId).emit("request_sent", {
       message: "Request sent successfully",
     });
   });
@@ -120,7 +120,98 @@ io.on("connection", async (socket) => {
     });
   });
 
-  socket.on("end", function () {
+  socket.on("get_direct_conversations", async ({ userId }, callback) => {
+    const existingConversations = await OneToOneMessage.find({
+      participants: { $all: [userId] },
+    }).populate("participants", "firstName lastName _id email status");
+
+    // db.books.find({ authors: { $elemMatch: { name: "John Smith" } } })
+
+    console.log(existingConversations);
+
+    callback(existingConversations);
+  });
+
+  socket.on("start_conversation", async (data) => {
+    // data: {to: from:}
+    const { to, from } = data;
+
+    // check if there is any existing conversation
+    const existingConversations = await OneToOneMessage.find({
+      participants: { $size: 2, $all: [to, from] },
+    }).populate("participants", "firstName lastName _id email status");
+
+    console.log(existingConversations[0], "Existing Conversation");
+
+    // if no => create a new OneToOneMessage doc & emit event "start_chat" & send conversation details as payload
+    if (existingConversations.length === 0) {
+      let newChat = await OneToOneMessage.create({
+        participants: [to, from],
+      });
+
+      newChat = await OneToOneMessage.findById(newChat).populate(
+        "participants",
+        "firstName lastName _id email status"
+      );
+
+      console.log(newChat);
+      // TODO
+      socket.emit("start_chat", newChat);
+    }
+    // if yes => just emit event "open_chat" & send conversation details as payload
+    else {
+      // TODO
+      socket.emit("open_chat", existingConversations[0]);
+    }
+  });
+
+  // Handle incoming text/link message
+  socket.on("text_message", (data) => {
+    console.log("Received message:", data);
+
+    // data: {to, from, text}
+
+    // create a new conversation if its dosent exists yet or add a new message to existing conversation
+
+    // save to db
+
+    // emit incoming_message -> to user
+
+    // emit outgoing_message -> from user
+  });
+
+  // handle Media/Document Message
+  socket.on("file_message", (data) => {
+    console.log("Received message:", data);
+
+    // data: {to, from, text, file}
+
+    // Get the file extension
+    const fileExtension = path.extname(data.file.name);
+
+    // Generate a unique filename
+    const filename = `${Date.now()}_${Math.floor(
+      Math.random() * 10000
+    )}${fileExtension}`;
+
+    // upload file to AWS s3
+
+    // create a new conversation if its doesn't exists yet or add a new message to existing conversation
+
+    // save to db
+
+    // emit incoming_message -> to user
+
+    // emit outgoing_message -> from user
+  });
+
+  socket.on("end", async (data) => {
+    // Find user by ID and set status as offline
+    if (data.user_id) {
+      await User.findByIdAndUpdate(data.userId, { status: "Offline" });
+    }
+    // broadcast to all conversation rooms of this user that this user is offline (disconnected)
+
     console.log("Closing connection");
     socket.disconnect(0);
   });
