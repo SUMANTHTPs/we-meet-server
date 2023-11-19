@@ -165,19 +165,64 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("get_messages", async (data, callback) => {
+    try {
+      const conversation = await OneToOneMessage.findById(data.conversationId);
+
+      if (!conversation) {
+        // Handle the case where the conversation document is not found
+        console.error(`Conversation not found for ID ${data.conversationId}`);
+        return;
+      }
+
+      const { messages } = conversation;
+      // Now you can use the 'messages' variable as needed
+      callback(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      // Handle other errors as needed
+    }
+  });
+
   // Handle incoming text/link message
-  socket.on("text_message", (data) => {
+  socket.on("text_message", async (data) => {
     console.log("Received message:", data);
 
     // data: {to, from, text}
+    const { message, conversationId, from, to, type } = data;
+
+    const toUser = await User.findById(to);
+    const fromUser = await User.findById(from);
+
+    // message => {to, from, type, created_at, text, file}
+
+    const newMessage = {
+      to: to,
+      from: from,
+      type: type,
+      created_at: Date.now(),
+      text: message,
+    };
 
     // create a new conversation if its dosent exists yet or add a new message to existing conversation
+    // fetch OneToOneMessage Doc & push a new message to existing conversation
+    const chat = await OneToOneMessage.findById(conversationId);
+    chat.messages.push(newMessage);
 
     // save to db
+    await chat.save({ new: true, validateModifiedOnly: true });
 
     // emit incoming_message -> to user
+    io.to(toUser.socketId).emit("new_message", {
+      conversationId,
+      message: newMessage,
+    });
 
     // emit outgoing_message -> from user
+    io.to(fromUser.socketId).emit("new_message", {
+      conversationId,
+      message: newMessage,
+    });
   });
 
   // handle Media/Document Message
