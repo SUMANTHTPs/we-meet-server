@@ -114,6 +114,10 @@ exports.generateZegoToken = catchAsync(async (req, res, next) => {
   try {
     const { userId, roomId } = req.body;
     console.log(userId, roomId, " from generate zego token");
+    console.log("first");
+    console.log(appID);
+    console.log(serverSecret);
+    console.log("first");
 
     const effectiveTimeInSeconds = 3600; //type: number; unit: s; token expiration time, unit: second
     const payloadObject = {
@@ -141,7 +145,7 @@ exports.generateZegoToken = catchAsync(async (req, res, next) => {
       token,
     });
   } catch (error) {
-    console.log(err);
+    console.log(error);
   }
 });
 
