@@ -3,6 +3,7 @@ const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
 const sendEmail = require("../services/mailer");
+const catchAsync = require("../utils/catchAsync");
 
 const User = require("../models/user");
 const filterObj = require("../utils/filterObj");
@@ -12,7 +13,7 @@ const resetPassword = require("../Templates/Mail/resetPassword");
 const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
 
 // Register new user
-exports.register = async (req, res, next) => {
+exports.register = catchAsync(async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
@@ -61,10 +62,10 @@ exports.register = async (req, res, next) => {
 
     next();
   }
-};
+});
 
 // send OTP
-exports.sendOTP = async (req, res, next) => {
+exports.sendOTP = catchAsync(async (req, res, next) => {
   const { userId } = req;
   const newOtp = otpGenerator.generate(6, {
     lowerCaseAlphabets: false,
@@ -95,10 +96,10 @@ exports.sendOTP = async (req, res, next) => {
     status: "success",
     message: "OTP sent successfully",
   });
-};
+});
 
 //  verify OTP
-exports.verifyOTP = async (req, res, next) => {
+exports.verifyOTP = catchAsync(async (req, res, next) => {
   const { email, otp } = req.body;
 
   const user = await User.findOne({
@@ -142,10 +143,10 @@ exports.verifyOTP = async (req, res, next) => {
     token,
     userId: user._id,
   });
-};
+});
 
 // login
-exports.login = async (req, res, next) => {
+exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -192,11 +193,11 @@ exports.login = async (req, res, next) => {
     token,
     userId: userDoc._id,
   });
-};
+});
 
 // Types of routes
 // Protected and unprotected
-exports.protect = async (req, res, next) => {
+exports.protect = catchAsync(async (req, res, next) => {
   // Getting the token (JWT) and check if it's there
 
   let token;
@@ -242,9 +243,9 @@ exports.protect = async (req, res, next) => {
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = thisUser;
   next();
-};
+});
 
-exports.forgotPassword = async (req, res, next) => {
+exports.forgotPassword = catchAsync(async (req, res, next) => {
   //Get user email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
@@ -282,9 +283,9 @@ exports.forgotPassword = async (req, res, next) => {
       message: "There was an error sending the email. Try again later!",
     });
   }
-};
+});
 
-exports.resetPassword = async (req, res, next) => {
+exports.resetPassword = catchAsync(async (req, res, next) => {
   // get the user based on token
   const hashedToken = crypto
     .createHash("sha256")
@@ -329,4 +330,4 @@ exports.resetPassword = async (req, res, next) => {
     message: "Password changed successfully",
     token,
   });
-};
+});
