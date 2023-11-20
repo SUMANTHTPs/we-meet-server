@@ -125,9 +125,7 @@ io.on("connection", async (socket) => {
   socket.on("get_direct_conversations", async ({ userId }, callback) => {
     const existingConversations = await OneToOneMessage.find({
       participants: { $all: [userId] },
-    }).populate("participants", "firstName lastName _id email status");
-
-    // db.books.find({ authors: { $elemMatch: { name: "John Smith" } } })
+    }).populate("participants", "firstName lastName avatar _id email status");
 
     console.log(existingConversations);
 

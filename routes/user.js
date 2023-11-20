@@ -29,4 +29,10 @@ router.post(
   authController.protect,
   userController.startVideoCall
 );
+router.get(
+  "/get-call-logs",
+  authController.protect,
+  userController.getCallLogs
+);
+
 module.exports = router;

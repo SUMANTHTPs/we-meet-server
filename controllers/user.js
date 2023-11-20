@@ -196,3 +196,85 @@ exports.startVideoCall = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getCallLogs = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+
+  const callLogs = [];
+
+  const audioCalls = await AudioCall.find({
+    participants: { $all: [userId] },
+  }).populate("from to");
+
+  const videoCalls = await VideoCall.find({
+    participants: { $all: [userId] },
+  }).populate("from to");
+
+  console.log(audioCalls, videoCalls);
+
+  for (let elm of audioCalls) {
+    const missed = elm.verdict !== "Accepted";
+    if (elm.from._id.toString() === userId.toString()) {
+      const otherUser = elm.to;
+
+      // outgoing
+      callLogs.push({
+        id: elm._id,
+        img: otherUser.avatar,
+        name: otherUser.firstName,
+        online: true,
+        incoming: false,
+        missed,
+      });
+    } else {
+      // incoming
+      const otherUser = elm.from;
+
+      // outgoing
+      callLogs.push({
+        id: elm._id,
+        img: otherUser.avatar,
+        name: otherUser.firstName,
+        online: true,
+        incoming: false,
+        missed,
+      });
+    }
+  }
+
+  for (let element of videoCalls) {
+    const missed = element.verdict !== "Accepted";
+    if (element.from._id.toString() === userId.toString()) {
+      const otherUser = element.to;
+
+      // outgoing
+      callLogs.push({
+        id: element._id,
+        img: otherUser.avatar,
+        name: otherUser.firstName,
+        online: true,
+        incoming: false,
+        missed,
+      });
+    } else {
+      // incoming
+      const otherUser = element.from;
+
+      // outgoing
+      callLogs.push({
+        id: element._id,
+        img: otherUser.avatar,
+        name: otherUser.firstName,
+        online: true,
+        incoming: false,
+        missed,
+      });
+    }
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Call Logs Found successfully!",
+    data: callLogs,
+  });
+});
