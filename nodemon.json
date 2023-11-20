@@ -1,0 +1,7 @@
+{
+    "env": {
+        "SG_KEY": "",
+        "ZEGO_APP_ID": 1,
+        "ZEGO_SERVER_SECRET": "1"
+    }
+}

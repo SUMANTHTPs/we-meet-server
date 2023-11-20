@@ -2,6 +2,16 @@ const FriendRequest = require("../models/friendRequest");
 const User = require("../models/user");
 const filterObj = require("../utils/filterObj");
 
+const { generateToken04 } = require("./zegoServerAssistant");
+
+// appid is a number
+// Example: 1234567890
+const appID = process.env.ZEGO_APP_ID; // type: number
+
+// serverSecret is string
+// Example：'sdfsdfsd323sdfsdf'
+const serverSecret = process.env.ZEGO_SERVER_SECRET; // type: 32 byte length string
+
 exports.updateMe = async (req, res, next) => {
   const { user } = req;
 
@@ -29,7 +39,7 @@ exports.getUsers = async (req, res, next) => {
     verified: true,
   }).select("firstName lastName _id");
 
-  // TODO => check 
+  // TODO => check
   const thisUser = req.user;
 
   const remainingUsers = allUsers.filter(
@@ -67,5 +77,39 @@ exports.getFriends = async (req, res, next) => {
     status: "success",
     data: thisUser.friends,
     message: "Friends found successfully!",
+  });
+};
+
+/**
+ * Authorization authentication token generation
+ */
+
+exports.generateZegoToken = async (req, res, next) => {
+  const { userId, roomId } = req.body;
+
+  const effectiveTimeInSeconds = 3600; //type: number; unit: s; token expiration time, unit: second
+  const payloadObject = {
+    room_id: roomId, // Please modify to the user's roomID
+    // The token generated allows loginRoom (login room) action
+    // The token generated in this example allows publishStream (push stream) action
+    privilege: {
+      1: 1, // loginRoom: 1 pass , 0 not pass
+      2: 1, // publishStream: 1 pass , 0 not pass
+    },
+    stream_id_list: null,
+  }; //
+  const payload = JSON.stringify(payloadObject);
+  // Build token
+  const token = generateToken04(
+    appID * 1, // APP ID NEEDS TO BE A NUMBER
+    userId,
+    serverSecret,
+    effectiveTimeInSeconds,
+    payload
+  );
+  res.status(200).json({
+    status: "success",
+    message: "Token generated successfully",
+    token,
   });
 };
