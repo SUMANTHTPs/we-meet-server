@@ -25,7 +25,7 @@ const VideoCall = require("./models/videoCall");
 // Create an io server and allow for CORS from http://localhost:3000 with GET and POST methods
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -62,11 +62,15 @@ io.on("connection", async (socket) => {
   console.log(JSON.stringify(socket.handshake.query));
   const userId = socket.handshake.query["userId"];
 
-  if (Boolean(userId) && userId) {
-    await User.findByIdAndUpdate(userId, {
-      socketId: socket.id,
-      status: "Online",
-    });
+  if (Boolean(userId) && userId != null) {
+    try {
+      await User.findByIdAndUpdate(userId, {
+        socketId: socket.id,
+        status: "Online",
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   // We can write our socket event listeners in here...
@@ -167,20 +171,12 @@ io.on("connection", async (socket) => {
 
   socket.on("get_messages", async (data, callback) => {
     try {
-      const conversation = await OneToOneMessage.findById(data.conversationId);
-
-      if (!conversation) {
-        // Handle the case where the conversation document is not found
-        console.error(`Conversation not found for ID ${data.conversationId}`);
-        return;
-      }
-
-      const { messages } = conversation;
-      // Now you can use the 'messages' variable as needed
+      const { messages } = await OneToOneMessage.findById(
+        data.conversationId
+      ).select("messages");
       callback(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
-      // Handle other errors as needed
     }
   });
 
