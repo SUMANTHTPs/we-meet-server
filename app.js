@@ -44,7 +44,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: "https://we-meet-sumanth.netlify.app",
 
     methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
 
