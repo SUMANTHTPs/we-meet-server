@@ -26,7 +26,8 @@ const VideoCall = require("./models/videoCall");
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"],
+    methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
+    credentials: true,
   },
 });
 
