@@ -44,7 +44,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: "https://we-meet-two.vercel.app",
 
     methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
 
